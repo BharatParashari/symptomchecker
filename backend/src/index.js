@@ -89,10 +89,18 @@ app.use('/api/facilities', facilityRoutes);
 
 app.use((err, _req, res, _next) => {
   const status = err.status || 500;
-  console.error('[Error]', err.message);
+  // Log full detail server-side only.
+  console.error('[Error]', status, err.message);
+  // Client-facing message: for 4xx we surface the (intentional) message; for
+  // 5xx in production we return a generic message so internal details / stack
+  // traces / DB errors never leak to clients.
+  const clientMessage =
+    status < 500 || config.nodeEnv !== 'production'
+      ? err.message || 'Internal server error'
+      : 'Internal server error';
   res.status(status).json({
-    error: err.message || 'Internal server error',
-    ...(config.nodeEnv === 'development' && { stack: err.stack }),
+    error: clientMessage,
+    ...(config.nodeEnv !== 'production' && status >= 500 && { stack: err.stack }),
   });
 });
 

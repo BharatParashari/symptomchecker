@@ -47,7 +47,8 @@ export function setupSocket(io) {
         };
         io.to(`appointment:${appointmentId}`).emit('new_message', payload);
       } catch (err) {
-        socket.emit('error', { message: err.message });
+        console.error('[socket] send_message failed:', err.message);
+        socket.emit('error', { message: 'Message could not be delivered' });
       }
     });
 

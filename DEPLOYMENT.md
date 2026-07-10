@@ -149,6 +149,29 @@ Back up Postgres:
 docker compose exec postgres pg_dump -U symptom symptom_checker > backup_$(date +%F).sql
 ```
 
+## Least-privilege database role (item 41)
+
+The app doesn't need superuser. After the schema is created, create a restricted
+role and point `DATABASE_URL` at it:
+```sql
+-- run as the postgres superuser once, after tables exist
+CREATE ROLE app_user LOGIN PASSWORD 'a-strong-password';
+GRANT CONNECT ON DATABASE symptom_checker TO app_user;
+GRANT USAGE ON SCHEMA public TO app_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_user;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_user;
+-- no DDL (CREATE/DROP/ALTER), no access to other databases
+```
+Then set `DATABASE_URL=postgresql://app_user:...@postgres:5432/symptom_checker`.
+
+## Monitoring & alerting (item 43)
+
+- Point an uptime monitor (UptimeRobot, Better Stack, or a cron `curl`) at
+  `https://symptom.yourdomain.com/api/health` — it returns `status: ok` plus
+  which integrations are live.
+- Ship container logs somewhere durable (`docker compose logs`, or a log driver)
+  so the audit trail survives restarts.
+
 ---
 
 ## Security notes baked into this build

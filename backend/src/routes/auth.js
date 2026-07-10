@@ -4,19 +4,42 @@ import { registerUser, loginUser, getUserById } from '../services/authService.js
 
 const router = Router();
 
+// --- validation helpers ----------------------------------------------------
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const SEXES = new Set(['male', 'female', null, undefined]);
+
+function validateCredentials(email, password) {
+  if (typeof email !== 'string' || !EMAIL_RE.test(email) || email.length > 254) {
+    return 'A valid email address is required';
+  }
+  if (typeof password !== 'string' || password.length < 8 || password.length > 200) {
+    return 'Password must be between 8 and 200 characters';
+  }
+  return null;
+}
+
+function str(v, max = 100) {
+  return typeof v === 'string' ? v.slice(0, max) : '';
+}
+
 router.post('/register/patient', async (req, res, next) => {
   try {
     const { email, password, firstName, lastName, dateOfBirth, biologicalSex, phone } = req.body;
-    if (!email || !password || !firstName || !lastName) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    const credErr = validateCredentials(email, password);
+    if (credErr) return res.status(400).json({ error: credErr });
+    if (!firstName || !lastName) {
+      return res.status(400).json({ error: 'First and last name are required' });
+    }
+    if (!SEXES.has(biologicalSex)) {
+      return res.status(400).json({ error: 'biologicalSex must be male or female' });
     }
     const result = await registerUser({
       email,
       password,
       role: 'patient',
-      firstName,
-      lastName,
-      profile: { dateOfBirth, biologicalSex, phone },
+      firstName: str(firstName),
+      lastName: str(lastName),
+      profile: { dateOfBirth, biologicalSex, phone: str(phone, 20) },
     });
     res.status(201).json(result);
   } catch (err) {
@@ -28,16 +51,23 @@ router.post('/register/doctor', async (req, res, next) => {
   try {
     const { email, password, firstName, lastName, specialization, licenseNumber, yearsExperience, bio } =
       req.body;
-    if (!email || !password || !firstName || !lastName || !specialization || !licenseNumber) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    const credErr = validateCredentials(email, password);
+    if (credErr) return res.status(400).json({ error: credErr });
+    if (!firstName || !lastName || !specialization || !licenseNumber) {
+      return res.status(400).json({ error: 'Name, specialization, and license number are required' });
     }
     const result = await registerUser({
       email,
       password,
       role: 'doctor',
-      firstName,
-      lastName,
-      profile: { specialization, licenseNumber, yearsExperience, bio },
+      firstName: str(firstName),
+      lastName: str(lastName),
+      profile: {
+        specialization: str(specialization),
+        licenseNumber: str(licenseNumber, 60),
+        yearsExperience: Number.isFinite(Number(yearsExperience)) ? Number(yearsExperience) : 0,
+        bio: str(bio, 2000),
+      },
     });
     res.status(201).json({
       ...result,
@@ -51,7 +81,7 @@ router.post('/register/doctor', async (req, res, next) => {
 router.post('/login', async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) {
+    if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
       return res.status(400).json({ error: 'Email and password required' });
     }
     const result = await loginUser(email, password);
