@@ -1,12 +1,14 @@
 # MedCheck — AI Symptom Checker
 
-A full-stack healthcare platform with an AI-powered clinical interview (Infermedica API), patient/doctor authentication, appointment booking, and real-time chat.
+A full-stack healthcare platform with an AI-powered clinical interview backed by a self-hosted Bayesian differential-diagnosis engine, patient/doctor authentication, appointment booking, and real-time chat.
 
 ## Features
 
 ### Phase 1 — Core Symptom Checker
-- **Infermedica API integration** with built-in demo mode (no API key required to start)
-- **Clinical interview flow**: demographics → searchable symptom tags → dynamic follow-up questions
+- **Self-hosted differential-diagnosis engine** — Naive Bayes over a public 41-disease / 132-symptom dataset, temperature-calibrated so probabilities form a realistic differential (no external key required)
+- **Adaptive interview**: demographics → searchable symptom tags → follow-up questions chosen by expected information gain
+- **Emergency red-flag layer** independent of the probability math (e.g. chest pain + breathlessness)
+- **Optional ApiMedic comparison** and **ABDM hospital lookup across India**
 - **Results screen** with likelihood levels, recommended actions, and medical disclaimer
 
 ### Phase 2 — Tech Stack
@@ -32,6 +34,10 @@ A full-stack healthcare platform with an AI-powered clinical interview (Infermed
 
 ---
 
+## Deployment
+
+For production deployment on a VPS (Docker Compose, HTTPS, rate limiting), see **[DEPLOYMENT.md](./DEPLOYMENT.md)**.
+
 ## Quick Start
 
 ### Prerequisites
@@ -50,7 +56,7 @@ npm install
 Edit `.env`:
 - Set `DATABASE_URL` for PostgreSQL
 - Set `MONGODB_URI` for MongoDB
-- Add Infermedica credentials from [developer.infermedica.com](https://developer.infermedica.com) (optional)
+- (Optional) Add `APIMEDIC_USERNAME`/`APIMEDIC_PASSWORD` for a comparison source, and `ABDM_CLIENT_ID`/`ABDM_CLIENT_SECRET` for real hospital lookup
 
 Initialize database:
 ```bash

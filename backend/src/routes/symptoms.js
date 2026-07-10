@@ -7,16 +7,16 @@ import {
   runDiagnosis,
   getConditionInfo,
   specializationForCondition,
-} from '../services/infermedica.js';
+} from '../services/diagnosisEngine.js';
 import { SymptomSession } from '../db/mongo.js';
-import { isInfermedicaConfigured } from '../config/index.js';
+import { isApiMedicConfigured } from '../config/index.js';
 
 const router = Router();
 
 router.get('/status', (_req, res) => {
   res.json({
-    infermedicaConfigured: isInfermedicaConfigured(),
-    demoMode: !isInfermedicaConfigured(),
+    engine: 'bayesian-differential-v1',
+    apiMedicComparison: isApiMedicConfigured(),
   });
 });
 

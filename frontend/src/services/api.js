@@ -40,5 +40,11 @@ export const api = {
 };
 
 export function getSocketUrl() {
-  return import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+  if (import.meta.env.VITE_SOCKET_URL) return import.meta.env.VITE_SOCKET_URL;
+  // In the browser, connect to the same origin (nginx proxies /socket.io to the
+  // backend). Falls back to localhost for local dev without a proxy.
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
+  return 'http://localhost:5000';
 }

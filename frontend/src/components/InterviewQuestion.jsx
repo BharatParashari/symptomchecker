@@ -14,7 +14,7 @@ export default function InterviewQuestion({ question, onAnswer, loading, onBack 
       <div className="space-y-2">
         {(question.items || []).map((item) => (
           <button
-            key={item.id}
+            key={`${item.id}_${item.choice_id}`}
             type="button"
             disabled={loading}
             onClick={() => handleSelect(item)}

@@ -126,7 +126,7 @@ export async function listPendingDoctors() {
 }
 
 export async function matchDoctorsForDiagnosis(diagnosisName) {
-  const { specializationForCondition } = await import('./infermedica.js');
+  const { specializationForCondition } = await import('./diagnosisEngine.js');
   const spec = specializationForCondition(diagnosisName);
   const doctors = await listVerifiedDoctors({ specialization: `%${spec.split(' ')[0]}%` });
   if (doctors.length) return { specialization: spec, doctors };
