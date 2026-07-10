@@ -16,7 +16,8 @@ function signToken(user) {
 export async function registerUser({ email, password, role, firstName, lastName, profile = {} }) {
   const existing = await query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
   if (existing.rows.length) {
-    throw Object.assign(new Error('Email already registered'), { status: 409 });
+    // Do NOT confirm the email exists (prevents account enumeration).
+    return { duplicate: true };
   }
 
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
@@ -90,4 +91,23 @@ export async function getUserById(id) {
     [id]
   );
   return result.rows[0] || null;
+}
+
+export async function deleteUser(id) {
+  const client = await (await import('../db/postgres.js')).getPool().connect();
+  try {
+    await client.query('BEGIN');
+    // Remove dependents that lack ON DELETE CASCADE, then the user.
+    await client.query('DELETE FROM chat_messages WHERE sender_id = $1', [id]);
+    await client.query('DELETE FROM appointments WHERE patient_id = $1 OR doctor_id = $1', [id]);
+    await client.query('DELETE FROM availability_slots WHERE doctor_id = $1', [id]);
+    await client.query('DELETE FROM users WHERE id = $1', [id]); // profiles cascade
+    await client.query('COMMIT');
+    return { deleted: true };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 }

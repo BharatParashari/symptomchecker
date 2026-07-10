@@ -26,6 +26,7 @@ export const api = {
   registerDoctor: (body) => request('/auth/register/doctor', { method: 'POST', body: JSON.stringify(body) }),
   login: (body) => request('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
   me: () => request('/auth/me'),
+  deleteAccount: () => request('/auth/me', { method: 'DELETE' }),
 
   listDoctors: (specialization) =>
     request(`/doctors${specialization ? `?specialization=${encodeURIComponent(specialization)}` : ''}`),

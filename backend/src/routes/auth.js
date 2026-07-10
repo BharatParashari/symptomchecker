@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate, requireRole } from '../middleware/auth.js';
-import { registerUser, loginUser, getUserById } from '../services/authService.js';
+import { registerUser, loginUser, getUserById, deleteUser } from '../services/authService.js';
 
 const router = Router();
 
@@ -41,6 +41,7 @@ router.post('/register/patient', async (req, res, next) => {
       lastName: str(lastName),
       profile: { dateOfBirth, biologicalSex, phone: str(phone, 20) },
     });
+    if (result.duplicate) return res.status(200).json({ message: 'If this email is available, your account has been created. Please sign in.' });
     res.status(201).json(result);
   } catch (err) {
     next(err);
@@ -69,6 +70,7 @@ router.post('/register/doctor', async (req, res, next) => {
         bio: str(bio, 2000),
       },
     });
+    if (result.duplicate) return res.status(200).json({ message: 'If this email is available, your account has been created. Please sign in.' });
     res.status(201).json({
       ...result,
       message: 'Registration submitted. Your credentials will be reviewed before activation.',
@@ -120,6 +122,15 @@ router.patch('/admin/doctors/:id/verify', authenticate, requireRole('admin'), as
     const { verifyDoctor } = await import('../services/doctorService.js');
     const profile = await verifyDoctor(req.params.id, req.user.id, status);
     res.json(profile);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/me', authenticate, async (req, res, next) => {
+  try {
+    await deleteUser(req.user.id);
+    res.json({ deleted: true, message: 'Your account and associated data have been deleted.' });
   } catch (err) {
     next(err);
   }

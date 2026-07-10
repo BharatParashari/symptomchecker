@@ -34,27 +34,37 @@ export function AuthProvider({ children }) {
     return u;
   };
 
+  const deleteAccount = async () => {
+    await api.deleteAccount();
+    localStorage.removeItem('token');
+    setUser(null);
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
   };
 
   const registerPatient = async (data) => {
-    const { user: u, token } = await api.registerPatient(data);
+    const res = await api.registerPatient(data);
+    if (!res.token) throw new Error(res.message || 'Please sign in.');
+    const { user: u, token } = res;
     localStorage.setItem('token', token);
     setUser(u);
     return u;
   };
 
   const registerDoctor = async (data) => {
-    const { user: u, token } = await api.registerDoctor(data);
+    const res = await api.registerDoctor(data);
+    if (!res.token) throw new Error(res.message || 'Please sign in.');
+    const { user: u, token } = res;
     localStorage.setItem('token', token);
     setUser(u);
     return u;
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, registerPatient, registerDoctor, reload: loadUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, registerPatient, registerDoctor, deleteAccount, reload: loadUser }}>
       {children}
     </AuthContext.Provider>
   );
